@@ -1,0 +1,33 @@
+# dependencies (reinstalled in build)
+node_modules/
+
+# build artifacts
+.next/
+out/
+build/
+dist/
+
+# git
+.git/
+.gitignore
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# docs
+*.md
+LICENSE
+docs/
+
+# editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# uploads (runtime data, not part of image)
+public/uploads/
+
+# typescript cache
+*.tsbuildinfo
