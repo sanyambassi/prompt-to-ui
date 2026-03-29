@@ -169,4 +169,4 @@ docker cp $(docker compose ps -q app):/app/public/uploads ./uploads-backup
 
 ## License
 
-MIT
+[MIT](./LICENSE)
