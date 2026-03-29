@@ -9,6 +9,7 @@ Inspired by [Google Stitch](https://stitch.withgoogle.com/).
 - **Text-to-UI generation** — Describe any interface and get pixel-perfect HTML/CSS screens
 - **Multi-model support** — OpenAI (GPT-5.4), Anthropic (Claude), Google (Gemini), xAI (Grok)
 - **AI image synthesis** — Embedded image generation for realistic mockups
+- **URL replication** — Attach a website URL and the AI will browse it and replicate the design
 - **Multi-screen projects** — Generate complete app flows with multiple screens
 - **Live editing** — Click any element on the canvas to edit it inline
 - **Prototype links** — Clickable flows between screens
@@ -16,54 +17,17 @@ Inspired by [Google Stitch](https://stitch.withgoogle.com/).
 - **Export** — Download self-contained HTML/CSS bundles
 - **No auth required** — Single-user, fully local deployment
 
-## Quick Start (Docker)
+## Quick Start
 
-The fastest way to get running. Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
-
-### 1. Create a `docker-compose.yml`
-
-```yaml
-services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: studio
-      POSTGRES_PASSWORD: studio
-      POSTGRES_DB: studio
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U studio -d studio"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  app:
-    image: sanyambassi/prompt-to-ui:latest
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgres://studio:studio@db:5432/studio
-    volumes:
-      - uploads:/app/public/uploads
-    depends_on:
-      db:
-        condition: service_healthy
-
-volumes:
-  pgdata:
-  uploads:
-```
-
-### 2. Start
+Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
 ```bash
+git clone https://github.com/sanyambassi/prompt-to-ui.git
+cd prompt-to-ui
 docker compose up -d
 ```
 
-### 3. Configure API keys
+This pulls the pre-built image from Docker Hub and starts the app with a local PostgreSQL database. The repository includes the database schema (`db/migrations/init.sql`) which Postgres runs automatically on first start.
 
 Open [http://localhost:3000/settings](http://localhost:3000/settings) and add at least one API key:
 
@@ -78,32 +42,36 @@ Keys are stored in the local PostgreSQL database and never leave your machine.
 
 > **Note:** Anthropic (Claude) does not support image generation. If you only add an Anthropic key, UI screens will generate fine but embedded images will be skipped. Add an OpenAI, Google, or xAI key alongside Anthropic for full image synthesis.
 
-### 4. Generate
-
-Open [http://localhost:3000](http://localhost:3000), type a prompt, and hit Generate.
+Then open [http://localhost:3000](http://localhost:3000), type a prompt, and hit Generate.
 
 ---
 
-## Build & Deploy from Source
+## Build from Source
 
-If you prefer to build the Docker image yourself or develop locally.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) 20+
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-
-### Option A: Build your own Docker image
+To build the Docker image yourself instead of pulling from Docker Hub:
 
 ```bash
 git clone https://github.com/sanyambassi/prompt-to-ui.git
 cd prompt-to-ui
-docker compose up -d
 ```
 
-This uses the included `docker-compose.yml` which builds the image from the `Dockerfile` locally instead of pulling from Docker Hub.
+Edit `docker-compose.yml` — comment out the `image` line and uncomment `build`:
 
-### Option B: Local development (hot reload)
+```yaml
+  app:
+    # image: sanyambassi/prompt-to-ui:latest
+    build: .
+```
+
+Then start:
+
+```bash
+docker compose up -d --build
+```
+
+---
+
+## Local Development (Hot Reload)
 
 Run Postgres in Docker and the Next.js dev server natively:
 

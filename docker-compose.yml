@@ -18,7 +18,10 @@ services:
       retries: 10
 
   app:
-    build: .
+    image: sanyambassi/prompt-to-ui:latest
+    # To build locally instead of pulling from Docker Hub, comment out 'image' above
+    # and uncomment the next line:
+    # build: .
     restart: unless-stopped
     ports:
       - "3000:3000"

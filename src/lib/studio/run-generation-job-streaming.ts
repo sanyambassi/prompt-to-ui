@@ -280,13 +280,18 @@ ${userPrompt}`;
     userPrompt = `[Existing project context — for visual/style continuity ONLY. Do NOT reproduce this page. Create NEW, DIFFERENT screens as the user requests.]\n${ctxClip}\n\n---\n\n${userPrompt}`;
   }
 
-  const { preamble, images } = await resolveGenerationAttachments(
+  console.log(`[gen:${jobId}] job.context raw:`, JSON.stringify(job.context));
+  const { preamble, images, referenceUrls } = await resolveGenerationAttachments(
     user.id,
     job.project_id,
     job.context ?? {},
   );
   if (preamble) {
-    userPrompt = `${preamble}${userPrompt}`;
+    userPrompt = `${userPrompt}\n\n${preamble}`;
+  }
+  if (referenceUrls.length > 0) {
+    console.log(`[gen:${jobId}] ${referenceUrls.length} reference URL(s):`, referenceUrls);
+    console.log(`[gen:${jobId}] preamble length: ${preamble.length} chars`);
   }
 
   if (options?.attachedImages?.length) {
@@ -561,6 +566,7 @@ ${userPrompt}`;
         base64: im.base64,
         label: im.label,
       })),
+      referenceUrls: referenceUrls.length > 0 ? referenceUrls : undefined,
       onEvent: onStreamEvent,
     });
     flushThinking();

@@ -33,6 +33,8 @@ type Props = {
   prototype?: SchemaRendererPrototype;
   /** Enable live WYSIWYG editing inside the iframe. */
   editable?: boolean;
+  /** Allow pointer events (e.g. scrolling) without full edit mode. */
+  interactive?: boolean;
 };
 
 function getText(props: Record<string, unknown> | undefined): string {
@@ -572,7 +574,7 @@ function renderNode(
   }
 }
 
-function HtmlIframe({ srcDoc, editable }: { srcDoc: string; editable?: boolean }) {
+function HtmlIframe({ srcDoc, editable, interactive }: { srcDoc: string; editable?: boolean; interactive?: boolean }) {
   const [loaded, setLoaded] = useState(false);
   const handleLoad = useCallback(() => setLoaded(true), []);
 
@@ -591,14 +593,17 @@ function HtmlIframe({ srcDoc, editable }: { srcDoc: string; editable?: boolean }
         className="h-full min-h-[320px] w-full border-0 bg-white"
         srcDoc={srcDoc}
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-        style={{ pointerEvents: editable ? "auto" : "none" }}
+        style={{
+          pointerEvents: (editable || interactive) ? "auto" : "none",
+          touchAction: (editable || interactive) ? "auto" : undefined,
+        }}
         onLoad={handleLoad}
       />
     </div>
   );
 }
 
-export function SchemaRenderer({ schema, className, selection, prototype, editable }: Props) {
+export function SchemaRenderer({ schema, className, selection, prototype, editable, interactive }: Props) {
   const root = migrateSchemaToLatest(schema);
   const htmlDoc = getHtmlDocumentString(root);
   if (htmlDoc) {
@@ -618,7 +623,7 @@ export function SchemaRenderer({ schema, className, selection, prototype, editab
         )}
         onClick={clearOnBackdrop}
       >
-        <HtmlIframe srcDoc={processedHtml} editable={editable} />
+        <HtmlIframe srcDoc={processedHtml} editable={editable} interactive={interactive} />
       </div>
     );
   }

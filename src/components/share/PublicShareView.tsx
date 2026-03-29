@@ -69,6 +69,7 @@ export function PublicShareView({ project, screens, prototypeLinks }: Props) {
         <SchemaRenderer
           schema={active.ui_schema}
           className="min-h-[480px]"
+          interactive
           prototype={{
             enabled: true,
             screenId: active.id,

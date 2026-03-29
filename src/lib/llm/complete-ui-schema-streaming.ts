@@ -60,6 +60,7 @@ async function streamAnthropic(
   userPrompt: string,
   onEvent: StreamCallback,
   visionImages?: UiSchemaVisionImage[],
+  referenceUrls?: string[],
 ): Promise<string> {
   const client = new Anthropic({ apiKey });
 
@@ -118,6 +119,13 @@ async function streamAnthropic(
   const tools: Record<string, unknown>[] = [
     { type: webSearchVersion, name: "web_search", max_uses: 10 },
   ];
+  if (referenceUrls && referenceUrls.length > 0) {
+    tools.push({
+      type: "web_fetch_20250910",
+      name: "web_fetch",
+      max_uses: 5,
+    });
+  }
 
   const stream = await client.messages.create({
     model,
@@ -156,6 +164,7 @@ async function streamGemini(
   userPrompt: string,
   onEvent: StreamCallback,
   visionImages?: UiSchemaVisionImage[],
+  referenceUrls?: string[],
 ): Promise<string> {
   const ai = new GoogleGenAI({ apiKey });
   const thinkingConfig = buildGeminiThinkingConfig(model, thinkingMode);
@@ -178,7 +187,10 @@ async function streamGemini(
       maxOutputTokens: 65536,
       systemInstruction: systemPrompt,
       thinkingConfig,
-      tools: [{ googleSearch: {} }],
+      tools: [
+        { googleSearch: {} },
+        ...(referenceUrls && referenceUrls.length > 0 ? [{ urlContext: {} }] : []),
+      ],
     } as Record<string, unknown>,
   });
 
@@ -383,6 +395,8 @@ export type StreamingCompleteParams = {
   /** When `html_document`, system prompt asks for full HTML per screen (still JSON envelope). */
   prototypeFormat?: PrototypeFormat;
   visionImages?: UiSchemaVisionImage[];
+  /** Reference URLs the user attached — enables provider URL-fetching tools. */
+  referenceUrls?: string[];
   onEvent: StreamCallback;
 };
 
@@ -398,7 +412,7 @@ export async function streamUiSchemaJson(
   }
 
   const fmt = params.prototypeFormat ?? "ui_schema";
-  const systemPrompt =
+  let systemPrompt =
     fmt === "html_document" ?
       params.refine ?
         buildHtmlPrototypeRefineSystemPrompt()
@@ -406,6 +420,10 @@ export async function streamUiSchemaJson(
     : params.refine ?
       buildUiSchemaRefineSystemPrompt()
     : buildUiSchemaSystemPrompt();
+
+  if (params.referenceUrls && params.referenceUrls.length > 0) {
+    systemPrompt += `\n\n**REFERENCE URL HANDLING (CRITICAL):**\nThe user has attached one or more reference URLs. You have browsing tools available (web search, URL fetch, or URL context depending on provider). You MUST browse each reference URL BEFORE generating any code. Study the actual page — its layout, colors, fonts, sections, imagery — and replicate or incorporate it as the user's prompt directs. Do NOT guess or assume what the page looks like based on the URL alone. Use your tools to visit it first.`;
+  }
 
   const visionForModel =
     params.visionImages?.length && studioModelSupportsVision(params.model)
@@ -435,6 +453,7 @@ export async function streamUiSchemaJson(
         params.userPrompt,
         params.onEvent,
         visionForModel,
+        params.referenceUrls,
       );
       break;
     case "google":
@@ -446,6 +465,7 @@ export async function streamUiSchemaJson(
         params.userPrompt,
         params.onEvent,
         visionForModel,
+        params.referenceUrls,
       );
       break;
     case "xai":

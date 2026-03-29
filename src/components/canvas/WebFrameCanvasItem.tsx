@@ -49,7 +49,7 @@ function isEmptySchema(schema: unknown): boolean {
   return !Array.isArray(children) || children.length === 0;
 }
 
-function ScreenContent({ screenId, editable }: { screenId: string; editable?: boolean }) {
+function ScreenContent({ screenId, editable, interactive }: { screenId: string; editable?: boolean; interactive?: boolean }) {
   const screen = useEditorStore((s) =>
     s.screens.find((sc) => sc.id === screenId),
   );
@@ -77,7 +77,7 @@ function ScreenContent({ screenId, editable }: { screenId: string; editable?: bo
       style={{ background: "#ffffff" }}
       {...(editable ? { "data-live-edit-screen": screenId } : {})}
     >
-      <SchemaRenderer schema={migrated} editable={editable} />
+      <SchemaRenderer schema={migrated} editable={editable} interactive={interactive} />
       {isBeingGenerated && <RefineOverlay />}
     </div>
   );
@@ -328,7 +328,7 @@ export function WebFrameCanvasItem({ item, onDragStart, editable }: Props) {
       >
         {!isPhone && <BrowserChrome w={item.width} />}
         <div className="min-h-0 flex-1 overflow-auto">
-          <ScreenContent screenId={item.screenId} editable={editable} />
+          <ScreenContent screenId={item.screenId} editable={editable} interactive />
         </div>
       </div>
     </div>

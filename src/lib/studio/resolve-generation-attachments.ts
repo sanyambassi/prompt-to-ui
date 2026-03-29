@@ -16,6 +16,8 @@ const MAX_ASSET_BYTES = 2_500_000;
 export type ResolveGenerationAttachmentsResult = {
   preamble: string;
   images: ResolvedVisionImage[];
+  /** Raw reference URLs the user attached (for provider URL-browsing tools). */
+  referenceUrls: string[];
 };
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
@@ -29,31 +31,30 @@ export async function resolveGenerationAttachments(
   const lines: string[] = [];
   const images: ResolvedVisionImage[] = [];
 
-  lines.push("[Inspiration & references]");
+  lines.push("[The user attached reference URLs/images with their request above]");
   lines.push(
-    "Use the following only as visual/brand/layout inspiration. Do not copy trademarked logos or proprietary assets verbatim unless the user explicitly asked. Produce original HTML as instructed.",
+    "When the user says \"this\", \"it\", \"the site\", \"replicate\", \"copy\", \"clone\", or \"make it look like\" — " +
+    "they are referring to the URLs/images listed below. Treat these as the PRIMARY subject of the request.",
   );
 
   const urls = ctx.reference_urls ?? [];
   if (urls.length > 0) {
     lines.push("");
-    lines.push("Reference websites & images (match overall look, hierarchy, and tone):");
     for (const u of urls) {
       const prev = await fetchReferenceSitePreview(u);
       if (prev.ok) {
         if (prev.directImageUrl) {
-          lines.push(`- ${prev.directImageUrl} — DIRECT IMAGE (attached as vision input)`);
+          lines.push(`REFERENCE URL: ${prev.directImageUrl} — DIRECT IMAGE (attached as vision input)`);
           lines.push(
             `  CRITICAL: Use this EXACT URL as the \`src\` attribute in \`<img>\` tags when the user wants this image embedded. Do NOT substitute with a placeholder or external service.`,
           );
         } else {
-          const parts = [prev.pageUrl];
+          const parts = [`REFERENCE URL: ${prev.pageUrl}`];
           if (prev.title) parts.push(`\u2014 "${prev.title}"`);
           if (prev.description) parts.push(`\u2014 ${prev.description}`);
           if (prev.themeColor) parts.push(`(brand color: ${prev.themeColor})`);
           if (prev.image) parts.push("(OG preview image attached below)");
-          else parts.push("(no preview image \u2014 infer from URL/domain)");
-          lines.push(`- ${parts.join(" ")}`);
+          lines.push(parts.join(" "));
           if (prev.structuralHints) {
             lines.push(`  ${prev.structuralHints}`);
           }
@@ -67,10 +68,17 @@ export async function resolveGenerationAttachments(
         }
       } else {
         lines.push(
-          `- ${u} (could not fetch: ${prev.reason} \u2014 still treat as a style reference from the domain/path)`,
+          `REFERENCE URL: ${u} (server could not fetch a preview — you MUST browse this URL yourself)`,
         );
       }
     }
+    lines.push("");
+    lines.push(
+      "ACTION REQUIRED: You have web browsing tools. You MUST use them to visit each REFERENCE URL above " +
+      "and study the ACTUAL page — its layout, colors, fonts, spacing, sections, and imagery. " +
+      "The metadata above is only a brief summary and is NOT sufficient. " +
+      "Browse the URL first, then follow the user's instruction about what to do with it.",
+    );
   }
 
   const assetIds = ctx.inspiration_asset_ids ?? [];
@@ -115,8 +123,10 @@ export async function resolveGenerationAttachments(
   }
 
   if (urls.length === 0 && assetIds.length === 0) {
-    return { preamble: "", images: [] };
+    console.log("[resolveAttachments] No reference URLs or assets — returning empty preamble");
+    return { preamble: "", images: [], referenceUrls: [] };
   }
+  console.log(`[resolveAttachments] ${urls.length} URL(s), ${assetIds.length} asset(s)`);
 
   lines.push("");
   lines.push("---");
@@ -125,5 +135,6 @@ export async function resolveGenerationAttachments(
   return {
     preamble: lines.join("\n"),
     images,
+    referenceUrls: urls,
   };
 }
