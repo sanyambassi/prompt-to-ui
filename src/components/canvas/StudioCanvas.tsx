@@ -261,7 +261,7 @@ function FloatingToolbar({
 
   return createPortal(
     <div
-      className="pointer-events-auto fixed z-[200]"
+      className="pointer-events-auto fixed z-[230]"
       style={{
         top: Math.max(8, rect.top - 52),
         left: rect.centerX,

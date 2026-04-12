@@ -66,7 +66,6 @@ export function CanvasItemToolbar({
   const toggleMenu = useCallback(
     (id: DropdownId) => (e: React.MouseEvent) => {
       e.stopPropagation();
-      e.preventDefault();
       setOpenMenu((prev) => (prev === id ? null : id));
     },
     [],
@@ -230,15 +229,16 @@ export function CanvasItemToolbar({
     <>
       {openMenu && (
         <div
-          className="fixed inset-0 z-[99]"
+          className="fixed inset-0 z-[98]"
+          aria-hidden
           onClick={closeMenu}
           onPointerDown={(e) => e.stopPropagation()}
         />
       )}
 
+      {/* overflow-x-auto removed: it clips position:absolute dropdowns below the row (CSS overflow). */}
       <div
-        className="flex items-center gap-0.5 rounded-xl border border-zinc-200 bg-white px-1 py-0.5 shadow-2xl shadow-zinc-300/60 backdrop-blur-2xl max-w-[calc(100vw-16px)] overflow-x-auto"
-        style={{ scrollbarWidth: "none" }}
+        className="relative z-[100] flex max-w-[min(calc(100vw-16px),96rem)] flex-wrap items-center gap-0.5 overflow-visible rounded-xl border border-zinc-200 bg-white px-1 py-0.5 shadow-2xl shadow-zinc-300/60 backdrop-blur-2xl"
         onPointerDown={(e) => e.stopPropagation()}
       >
         {/* Generate */}

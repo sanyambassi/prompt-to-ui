@@ -280,9 +280,9 @@ export function WebFrameCanvasItem({ item, onDragStart, editable }: Props) {
         }}
       />
 
-      {/* Screen label above frame — click to select, click again to rename */}
+      {/* Screen label above frame — below portaled floating toolbar (z-230); above selection outline (z-20) */}
       <div
-        className="absolute z-[201] flex cursor-pointer items-center gap-2"
+        className="absolute z-[30] flex cursor-pointer items-center gap-2"
         style={{ bottom: "100%", left: 0, marginBottom: 8 }}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={handleLabelClick}
